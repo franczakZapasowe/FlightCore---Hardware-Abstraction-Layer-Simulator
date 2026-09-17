@@ -1,0 +1,3 @@
+/home/mf/C++Projekt/FlightCoreHALS/build/CMakeFiles/FlightCore.dir
+/home/mf/C++Projekt/FlightCoreHALS/build/CMakeFiles/edit_cache.dir
+/home/mf/C++Projekt/FlightCoreHALS/build/CMakeFiles/rebuild_cache.dir
