@@ -8,7 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(${PROJECT_NAME} main.cpp
         pamiecIMU.cpp
         pamiecIMU.h
-        ImuWrapper.h)
+        ImuWrapper.h
+        SpscRingBuffer.h)
 
 target_compile_options(${PROJECT_NAME} PRIVATE
 -Wall
