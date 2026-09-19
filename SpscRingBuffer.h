@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <array>
 #include <atomic>
+#include <iostream>
 
 template <typename T, size_t Size>
 class SpscRingBuffer {

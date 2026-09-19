@@ -1,5 +1,7 @@
 #pragma once
 #include "pamiecIMU.h"
+#include "ImuDataPacket.h"
+#include "SpscRingBuffer.h"
 #include <atomic>
 #include <iostream>
 #include <cstdint>
@@ -7,7 +9,21 @@ constexpr uint32_t MASK_CTRL_REG_DATA_READY= 0x01; //maska do zmiany
 
 class ImuWrapper {
     ImuRegisters imuRegisters{};
-    public:
+
+    bool dataRdy() {
+        std::atomic_ref<uint32_t> atomic_raw(imuRegisters.STATUS_REG.raw);
+        uint32_t maska = 1;
+        if((atomic_raw.load(std::memory_order_acquire)&maska) == 1 )
+            return true;
+        return false;
+    }
+
+    void zerujDataRdy() {
+        std::atomic_ref<uint32_t> atomic_raw(imuRegisters.STATUS_REG.raw);
+        uint32_t maska = 1;
+        if (dataRdy()) atomic_raw.fetch_and(~maska,std::memory_order_relaxed);
+    }
+public:
     void zapisz(unsigned int x) {
             imuRegisters.ACCEL_X = x;
             imuRegisters.ACCEL_Y = x;
@@ -17,24 +33,20 @@ class ImuWrapper {
             imuRegisters.GYRO_Z = x;
             std::atomic_ref<uint32_t> atomic_raw(imuRegisters.STATUS_REG.raw);
             atomic_raw.fetch_or(MASK_CTRL_REG_DATA_READY, std::memory_order_release); // zmiana bitu 0 na 1
-            //std::cerr<<"Zpisalem i zmienilem bit na 1\n";
     }
 
-    void isDataRdy() {
-        std::atomic_ref<uint32_t> atomic_raw(imuRegisters.STATUS_REG.raw);
-        uint32_t maska = 1;
+    void isr_handler(SpscRingBuffer<ImuDataPacket,256>&buffer) {
+        if (dataRdy()) {
+            ImuDataPacket packet;
+            packet.ACCEL_X = imuRegisters.ACCEL_X;
+            packet.ACCEL_Y = imuRegisters.ACCEL_Y;
+            packet.ACCEL_Z = imuRegisters.ACCEL_Z;
+            packet.GYRO_X = imuRegisters.GYRO_X;
+            packet.GYRO_Y = imuRegisters.GYRO_Y;
+            packet.GYRO_Z = imuRegisters.GYRO_Z;
 
-        while ((atomic_raw.load(std::memory_order_acquire)&maska) == 0 ) {} //pusta petla czekajaca dopki status bedzie rowny 1
-        //std::cerr<<"Bit sie zmienil\n";
-
-        std::cout<<"Accel x: "<<imuRegisters.ACCEL_X << std::endl;
-        std::cout<<"Accel y: "<<imuRegisters.ACCEL_Y << std::endl;
-        std::cout<<"Accel z: "<<imuRegisters.ACCEL_Z << std::endl;
-        std::cout<<"Gyro x: "<<imuRegisters.GYRO_X << std::endl;
-        std::cout<<"Gyro y: "<<imuRegisters.GYRO_Y << std::endl;
-        std::cout<<"Gyro z: "<<imuRegisters.GYRO_Z << std::endl;
-
-        atomic_raw.fetch_and(~MASK_CTRL_REG_DATA_READY,std::memory_order_relaxed);
-        //std::cerr<<"Zmienilem bit na 0\n";
+            buffer.push(packet);
+            zerujDataRdy();
+        }
     }
 };
