@@ -10,7 +10,9 @@ add_executable(${PROJECT_NAME} main.cpp
         pamiecIMU.h
         ImuWrapper.h
         SpscRingBuffer.h
-        ImuDataPacket.h)
+        ImuDataPacket.h
+        Task.h
+        Scheduler.h)
 
 target_compile_options(${PROJECT_NAME} PRIVATE
 -Wall
