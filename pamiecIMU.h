@@ -1,5 +1,6 @@
+#pragma once
 #include <cstdint>
-
+#include <type_traits>
 #pragma pack(1)
 struct ImuRegisters{
     union {
@@ -22,7 +23,7 @@ struct ImuRegisters{
             uint32_t HW_ERROR: 1;       // 1 = Błąd sprzętowy
             uint32_t RESERVED: 29;      // Bity zarezerwowane, ignorować przy odczycie
         }bits;
-    } STATUS_REG;    //Rejestr statusu do zapisu przez hardware
+    } STATUS_REG; //Rejestr statusu do zapisu przez hardware
 
     //Dane z akcelerometru
     uint32_t ACCEL_X;
@@ -39,3 +40,4 @@ struct ImuRegisters{
 
 static_assert(sizeof(ImuRegisters)==32, "Struktura ma mniej lub wiecej niz 32 bajty");
 static_assert(std::is_standard_layout_v<ImuRegisters>, "Struktura nie ma standardowego ukladu");
+static_assert(std::is_trivially_copyable_v<ImuRegisters>,"Struktura msui byc prosta, zeby dzialac z std::atomic");
